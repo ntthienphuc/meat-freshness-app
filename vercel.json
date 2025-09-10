@@ -1,39 +1,17 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "vercel-api/api/*.js",
-      "use": "@vercel/node"
-    }
+    { "src": "public/**", "use": "@vercel/static" },
+    { "src": "vercel-api/api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    {
-      "src": "^/api/health$",
-      "dest": "vercel-api/api/health.js"
-    },
-    {
-      "src": "^/api/analyze$",
-      "dest": "vercel-api/api/analyze.js"
-    },
-    {
-      "src": "^/api/posts$",
-      "dest": "vercel-api/api/posts.js"
-    },
-    {
-      "src": "^/api/posts/([^/]+)$",
-      "dest": "vercel-api/api/posts-id.js"
-    },
-    {
-      "src": "^/api/seed$",
-      "dest": "vercel-api/api/seed.js"
-    },
-    {
-      "src": "^(?!/api/).*$",
-      "dest": "/public/index.html"
-    }
+    { "src": "^/api/health$", "dest": "vercel-api/api/health.js" },
+    { "src": "^/api/analyze$", "dest": "vercel-api/api/analyze.js" },
+    { "src": "^/api/posts$", "dest": "vercel-api/api/posts.js" },
+    { "src": "^/api/posts/([^/]+)$", "dest": "vercel-api/api/posts-id.js" },
+    { "src": "^/api/seed$", "dest": "vercel-api/api/seed.js" },
+
+    { "handle": "filesystem" },                
+    { "src": "/(.*)", "dest": "/public/index.html" } 
   ]
 }
