@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥩 Thịt Tươi Rói - Ứng dụng kiểm tra độ tươi thịt</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header__content">
+                <h1 class="logo" onclick="showPage('home')">🥩 Thịt Tươi Rói</h1>
+                <nav class="nav">
+                    <button class="nav__btn" onclick="showPage('home')">Trang chủ</button>
+                    <button class="nav__btn" onclick="showPage('blog')">Blog</button>
+                    <button class="nav__btn" onclick="showPage('dictionary')">Từ điển</button>
+                    <button class="nav__btn" onclick="showPage('detection')">Kiểm tra thịt</button>
+                </nav>
+                <button class="admin-icon" onclick="showPage('admin')" title="Quản trị">⚙️</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Homepage -->
+        <div id="home-page" class="page active">
+            <div class="container">
+                <!-- Hero Section with rotating tips -->
+                <section class="hero">
+                    <div class="hero-content">
+                        <h2 class="hero__title">Kiểm tra độ tươi của thịt một cách thông minh</h2>
+                        <p class="hero__subtitle">Ứng dụng AI giúp bạn nhận biết chất lượng thịt và bảo quản an toàn</p>
+                        <div class="hero__tip" id="rotating-tip">
+                            <span class="tip-icon">💡</span>
+                            <span class="tip-text">Đang tải mẹo...</span>
+                        </div>
+                        <button class="btn btn--primary btn--lg hero-cta" onclick="showPage('detection')">
+                            📱 Kiểm tra ngay bằng AI
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Quick Stats -->
+                <section class="stats-section">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">bài viết hữu ích</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">loại thịt</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">1,247</div>
+                            <div class="stat-label">lượt kiểm tra</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Meat Types -->
+                <section class="meat-types">
+                    <h3 class="section__title">Từ điển thịt tươi</h3>
+                    <div class="meat-grid">
+                        <div class="meat-card enhanced-card" onclick="showMeatDictionary('pork')">
+                            <div class="meat-card__icon">🐷</div>
+                            <h4 class="meat-card__title">Thịt Heo</h4>
+                            <p class="meat-card__desc">Tìm hiểu về độ tươi của thịt heo và cách bảo quản tốt nhất</p>
+                            <button class="btn btn--outline">Xem từ điển</button>
+                        </div>
+                        <div class="meat-card enhanced-card" onclick="showMeatDictionary('beef')">
+                            <div class="meat-card__icon">🐮</div>
+                            <h4 class="meat-card__title">Thịt Bò</h4>
+                            <p class="meat-card__desc">Hướng dẫn nhận biết độ tươi của thịt bò và bảo quản hiệu quả</p>
+                            <button class="btn btn--outline">Xem từ điển</button>
+                        </div>
+                        <div class="meat-card enhanced-card" onclick="showMeatDictionary('chicken')">
+                            <div class="meat-card__icon">🐔</div>
+                            <h4 class="meat-card__title">Thịt Gà</h4>
+                            <p class="meat-card__desc">Cách nhận biết thịt gà tươi ngon và bảo quản an toàn</p>
+                            <button class="btn btn--outline">Xem từ điển</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Useful Tips -->
+                <section class="tips-section">
+                    <h3 class="section__title">Mẹo hữu ích</h3>
+                    <div class="tips-grid" id="tips-container">
+                        <!-- Tips will be populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Featured Blog -->
+                <section class="featured-blog">
+                    <h3 class="section__title">Blog nổi bật</h3>
+                    <div class="blog-featured-grid" id="featured-blogs">
+                        <!-- Featured blogs will be populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Daily Question Widget -->
+                <section class="daily-question">
+                    <div class="question-card">
+                        <h4 class="question-title">🤔 Câu hỏi của ngày</h4>
+                        <p class="question-text" id="daily-question-text">Đang tải câu hỏi...</p>
+                        <div class="question-answer hidden" id="daily-answer">
+                            <p><strong>Trả lời:</strong> <span id="daily-answer-text"></span></p>
+                            <p class="question-tip" id="daily-tip"></p>
+                        </div>
+                        <button class="btn btn--secondary btn--sm" onclick="showDailyAnswer()">Xem đáp án</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Blog Listing Page -->
+        <div id="blog-page" class="page">
+            <div class="container">
+                <div class="blog-header">
+                    <h2>Blog An Toàn Thực Phẩm</h2>
+                    <p>Kiến thức và mẹo hay về thực phẩm sạch</p>
+                </div>
+
+                <div class="blog-controls">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="blog-search" placeholder="🔍 Tìm kiếm bài viết...">
+                    </div>
+                    <div class="category-filters">
+                        <button class="filter-btn active" onclick="filterBlogByCategory('')">Tất cả</button>
+                        <button class="filter-btn" onclick="filterBlogByCategory('An toàn thực phẩm')">An toàn thực phẩm</button>
+                        <button class="filter-btn" onclick="filterBlogByCategory('Mẹo nấu ăn')">Mẹo nấu ăn</button>
+                        <button class="filter-btn" onclick="filterBlogByCategory('Bảo quản thực phẩm')">Bảo quản thực phẩm</button>
+                        <button class="filter-btn" onclick="filterBlogByCategory('Kiến thức dinh dưỡng')">Kiến thức dinh dưỡng</button>
+                    </div>
+                </div>
+
+                <div class="blog-grid" id="blog-list">
+                    <!-- Blog posts will be populated by JS -->
+                </div>
+
+                <div class="popular-tags">
+                    <h4>Thẻ phổ biến</h4>
+                    <div class="tags-cloud" id="popular-tags">
+                        <!-- Tags will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Blog Post -->
+        <div id="blog-post-page" class="page">
+            <div class="container">
+                <button class="btn btn--secondary back-btn" onclick="showPage('blog')">← Về danh sách blog</button>
+                
+                <article class="blog-post" id="blog-post-content">
+                    <!-- Blog post content will be populated by JS -->
+                </article>
+
+                <div class="related-posts" id="related-posts">
+                    <h4>Bài viết liên quan</h4>
+                    <div class="related-grid" id="related-posts-grid">
+                        <!-- Related posts will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dictionary Page -->
+        <div id="dictionary-page" class="page">
+            <div class="container">
+                <div class="dict-header">
+                    <h2>Từ điển độ tươi thịt</h2>
+                    <p>Hướng dẫn chi tiết nhận biết chất lượng từng loại thịt</p>
+                </div>
+
+                <div class="meat-selection">
+                    <div class="meat-tabs">
+                        <button class="meat-tab active" onclick="selectMeatType('pork')">
+                            <span class="tab-icon">🐷</span>
+                            <span class="tab-label">Thịt Heo</span>
+                        </button>
+                        <button class="meat-tab" onclick="selectMeatType('beef')">
+                            <span class="tab-icon">🐮</span>
+                            <span class="tab-label">Thịt Bò</span>
+                        </button>
+                        <button class="meat-tab" onclick="selectMeatType('chicken')">
+                            <span class="tab-icon">🐔</span>
+                            <span class="tab-label">Thịt Gà</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="meat-content" class="meat-content">
+                    <!-- Meat content will be populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Meat Detail Page -->
+        <div id="meat-detail-page" class="page">
+            <div class="container">
+                <button class="btn btn--secondary back-btn" id="back-to-dict">← Quay lại từ điển</button>
+                
+                <div class="detail-hero" id="detail-hero">
+                    <!-- Detail hero will be populated by JS -->
+                </div>
+
+                <div class="detail-content" id="detail-content">
+                    <!-- Detail sections will be populated by JS -->
+                </div>
+
+                <div class="meat-faq" id="meat-faq">
+                    <!-- FAQ will be populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Page -->
+        <div id="detection-page" class="page">
+            <div class="container">
+                <div class="detection-header">
+                    <h2>Kiểm tra độ tươi bằng AI</h2>
+                    <p>Công nghệ AI hiện đại giúp phân tích chính xác độ tươi của thịt</p>
+                </div>
+                
+                <div class="detection-content">
+                    <div class="camera-container">
+                        <video id="video" class="camera-preview" autoplay muted playsinline></video>
+                        <canvas id="canvas" class="camera-canvas"></canvas>
+                        <div id="captured-image" class="captured-image hidden">
+                            <img id="captured-img" alt="Ảnh đã chụp">
+                        </div>
+                        <div class="camera-overlay">
+                            <div class="camera-frame">
+                                <div class="frame-corners"></div>
+                                <div class="scan-line"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="camera-controls">
+                        <button id="start-camera" class="btn btn--primary">📹 Mở camera</button>
+                        <button id="take-photo" class="btn btn--primary hidden">📸 Chụp ảnh</button>
+                        <button id="retake-photo" class="btn btn--secondary hidden">🔄 Chụp lại</button>
+                        <button id="analyze-photo" class="btn btn--primary hidden">🤖 Phân tích AI</button>
+                    </div>
+
+                    <div class="detection-steps">
+                        <h4>📋 Hướng dẫn từng bước:</h4>
+                        <ol>
+                            <li>Nhấn "Mở camera" để kích hoạt</li>
+                            <li>Đặt thịt trong khung hình</li>
+                            <li>Chụp ảnh khi ánh sáng đủ</li>
+                            <li>Nhấn "Phân tích AI" để nhận kết quả</li>
+                        </ol>
+                    </div>
+
+                    <div id="analysis-result" class="analysis-result hidden">
+                        <!-- Analysis results will be populated by JS -->
+                    </div>
+
+                    <div class="detection-tips">
+                        <h4>💡 Mẹo chụp ảnh hiệu quả:</h4>
+                        <ul>
+                            <li>📸 Đảm bảo ánh sáng đủ và tự nhiên</li>
+                            <li>⚪ Đặt thịt trên nền trắng hoặc sáng màu</li>
+                            <li>📱 Giữ camera ổn định, không bị rung</li>
+                            <li>📐 Chụp từ góc độ thẳng, không bị nghiêng</li>
+                            <li>🔍 Đưa thịt vào giữa khung hình</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Page -->
+        <div id="admin-page" class="page">
+            <div class="container">
+                <button class="btn btn--secondary back-btn" onclick="showPage('home')">← Về trang chủ</button>
+                
+                <div id="admin-login" class="admin-login">
+                    <div class="login-form">
+                        <h2>🔐 Quản trị viên</h2>
+                        <div class="form-group">
+                            <label class="form-label">Tên đăng nhập</label>
+                            <input type="text" class="form-control" id="admin-username" placeholder="admin">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mật khẩu</label>
+                            <input type="password" class="form-control" id="admin-password" placeholder="123456">
+                        </div>
+                        <button class="btn btn--primary btn--full-width" onclick="adminLogin()">Đăng nhập</button>
+                        <p class="login-hint">💡 Thông tin: admin / 123456</p>
+                    </div>
+                </div>
+
+                <div id="admin-dashboard" class="admin-dashboard hidden">
+                    <div class="admin-header">
+                        <h2>📊 Dashboard Quản Trị</h2>
+                        <div class="admin-stats">
+                            <div class="admin-stat">
+                                <span class="stat-label">Blog posts</span>
+                                <span class="stat-value">5</span>
+                            </div>
+                            <div class="admin-stat">
+                                <span class="stat-label">Lượt xem</span>
+                                <span class="stat-value">1,247</span>
+                            </div>
+                            <div class="admin-stat">
+                                <span class="stat-label">Meat types</span>
+                                <span class="stat-value">3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" onclick="showAdminSection('blog')">📝 Quản lý Blog</button>
+                        <button class="admin-tab" onclick="showAdminSection('meat')">🥩 Quản lý Thịt</button>
+                        <button class="admin-tab" onclick="showAdminSection('analytics')">📈 Thống kê</button>
+                    </div>
+
+                    <!-- Blog Management -->
+                    <div id="admin-blog" class="admin-section active">
+                        <div class="admin-controls">
+                            <button class="btn btn--primary" onclick="showBlogEditor()">➕ Tạo bài viết mới</button>
+                            <select class="form-control" id="blog-select">
+                                <option value="">Chọn bài viết để chỉnh sửa</option>
+                            </select>
+                        </div>
+
+                        <div id="blog-editor" class="blog-editor hidden">
+                            <form id="blog-form">
+                                <div class="form-group">
+                                    <label class="form-label">Tiêu đề</label>
+                                    <input type="text" class="form-control" id="blog-title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tóm tắt</label>
+                                    <textarea class="form-control" id="blog-excerpt" rows="2"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Danh mục</label>
+                                    <select class="form-control" id="blog-category">
+                                        <option value="An toàn thực phẩm">An toàn thực phẩm</option>
+                                        <option value="Mẹo nấu ăn">Mẹo nấu ăn</option>
+                                        <option value="Bảo quản thực phẩm">Bảo quản thực phẩm</option>
+                                        <option value="Kiến thức dinh dưỡng">Kiến thức dinh dưỡng</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Nội dung</label>
+                                    <textarea class="form-control" id="blog-content" rows="10"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tags (phân cách bằng dấu phẩy)</label>
+                                    <input type="text" class="form-control" id="blog-tags">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn--primary" onclick="saveBlogPost()">💾 Lưu bài viết</button>
+                                    <button type="button" class="btn btn--secondary" onclick="previewBlogPost()">👁️ Xem trước</button>
+                                    <button type="button" class="btn btn--outline" onclick="closeBlogEditor()">❌ Hủy</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Meat Management -->
+                    <div id="admin-meat" class="admin-section">
+                        <div class="admin-controls">
+                            <select id="meat-type-select" class="form-control">
+                                <option value="pork">Thịt Heo</option>
+                                <option value="beef">Thịt Bò</option>
+                                <option value="chicken">Thịt Gà</option>
+                            </select>
+                            <select id="freshness-level-select" class="form-control">
+                                <option value="5">Level 5 - Tươi mới</option>
+                                <option value="4">Level 4 - Tươi dùng ngay</option>
+                                <option value="3">Level 3 - Cần lưu ý</option>
+                                <option value="2">Level 2 - Gần hỏng</option>
+                                <option value="1">Level 1 - Không an toàn</option>
+                            </select>
+                            <button class="btn btn--primary" onclick="loadMeatData()">📋 Tải dữ liệu</button>
+                        </div>
+
+                        <form id="meat-form" class="edit-form">
+                            <div class="form-group">
+                                <label class="form-label">Tên cấp độ</label>
+                                <input type="text" class="form-control" id="edit-name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Màu sắc</label>
+                                <input type="color" class="form-control" id="edit-color">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tính chất</label>
+                                <textarea class="form-control" id="edit-properties" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Dấu hiệu nhận biết</label>
+                                <textarea class="form-control" id="edit-signs" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cách bảo quản</label>
+                                <textarea class="form-control" id="edit-storage" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Chế biến</label>
+                                <textarea class="form-control" id="edit-cooking" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cảnh báo</label>
+                                <textarea class="form-control" id="edit-warnings" rows="3"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn--primary" onclick="saveMeatData()">💾 Lưu thay đổi</button>
+                                <button type="button" class="btn btn--secondary" onclick="previewMeatData()">👁️ Xem trước</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Analytics -->
+                    <div id="admin-analytics" class="admin-section">
+                        <div class="analytics-grid">
+                            <div class="analytics-card">
+                                <h4>📊 Thống kê truy cập</h4>
+                                <div class="metric">
+                                    <span class="metric-label">Trang được xem nhiều nhất:</span>
+                                    <span class="metric-value">Kiểm tra thịt</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Blog phổ biến:</span>
+                                    <span class="metric-value">5 dấu hiệu nhận biết thịt bò</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Thời gian truy cập trung bình:</span>
+                                    <span class="metric-value">3 phút 24 giây</span>
+                                </div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>🔍 Từ khóa tìm kiếm</h4>
+                                <div class="search-keywords">
+                                    <span class="keyword">thịt bò tươi</span>
+                                    <span class="keyword">bảo quản thịt</span>
+                                    <span class="keyword">kiểm tra độ tươi</span>
+                                    <span class="keyword">thịt heo</span>
+                                    <span class="keyword">an toàn thực phẩm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-footer">
+                        <button class="btn btn--secondary" onclick="adminLogout()">🚪 Đăng xuất</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading overlay -->
+    <div id="loading" class="loading hidden">
+        <div class="loading__spinner"></div>
+        <p>Đang phân tích bằng AI...</p>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Did You Know Modal -->
+    <div id="did-you-know-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>🤔 Bạn có biết?</h4>
+                <button class="modal-close" onclick="closeDiDuKnowModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="did-you-know-text">Đang tải...</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--primary btn--sm" onclick="closeDiDuKnowModal()">Đã hiểu!</button>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeDiDuKnowModal()"></div>
+    </div>
+
+    <script src="runtime-config.js"></script>
+    <script src="ai-stub.js"></script>
+    <script src="app.js"></script>
+  <script src="blog-api-loader.js"></script>
+</body>
+</html>

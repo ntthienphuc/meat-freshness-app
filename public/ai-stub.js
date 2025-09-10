@@ -1,0 +1,3 @@
+window.AI=(function(){async function analyze(p){const cfg=(window.APP_CONFIG||{});if(!cfg.enableAI){return Promise.resolve({ok:true,meatType:(p&&p.meatType)||"pork",score:60,level:3,levelLabel:"Cần lưu ý",advice:"Chức năng AI tạm tắt. Bật enableAI trong runtime-config.js để gọi API thật."});}
+const base=cfg.apiBase||"";const r=await fetch(`${base}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p||{})});if(!r.ok)throw new Error(`AI analyze failed: ${r.status}`);return r.json();}
+async function health(){const cfg=(window.APP_CONFIG||{});if(!cfg.enableAI)return{ok:true,mock:true};const base=cfg.apiBase||"";const r=await fetch(`${base}/health`);return r.json();}return{analyze,health};})();

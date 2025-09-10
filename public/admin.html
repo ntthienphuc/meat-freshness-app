@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Blog</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-wrap { max-width: 980px; margin: 24px auto; padding: 0 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    textarea { width: 100%; min-height: 140px; }
+    input, textarea { border: 1px solid #d1d5db; border-radius: 10px; padding: 10px; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #e5e7eb; cursor: pointer; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { border-bottom: 1px solid #eee; padding: 8px 6px; text-align: left; }
+    .muted { color: #6b7280; font-size: 12px; }
+    .tag { display:inline-block; padding:2px 8px; border:1px solid #e5e7eb; border-radius:999px; margin-right:6px; font-size:12px; }
+    .flex { display:flex; gap:8px; align-items:center; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <h1>🛠️ Admin Blog</h1>
+    <p class="muted">Nhập <strong>Admin Token</strong> (đặt trong biến môi trường <code>ADMIN_TOKEN</code> trên Vercel).</p>
+    <div class="flex">
+      <input id="token" placeholder="Admin token..." />
+      <button id="saveToken">Lưu</button>
+      <button id="seed">Seed mẫu</button>
+    </div>
+
+    <h2 style="margin-top:24px;">Bài viết</h2>
+    <div style="overflow:auto;">
+      <table class="table" id="tbl">
+        <thead><tr><th>Tiêu đề</th><th>Tags</th><th>Tác giả</th><th>Phút</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <h2 style="margin-top:24px;">Tạo / Sửa bài</h2>
+    <div class="row">
+      <div>
+        <input id="title" placeholder="Tiêu đề" />
+        <input id="excerpt" placeholder="Mô tả ngắn" style="margin-top:8px;" />
+        <input id="tags" placeholder="Tags, ngăn cách bằng dấu phẩy" style="margin-top:8px;" />
+        <input id="author" placeholder="Tác giả" style="margin-top:8px;" />
+        <input id="minutes" type="number" value="5" placeholder="Phút đọc" style="margin-top:8px;" />
+      </div>
+      <div>
+        <textarea id="body" placeholder="Nội dung bài viết (markdown hoặc plain)"></textarea>
+      </div>
+    </div>
+    <div class="flex" style="margin-top:10px;">
+      <button id="create">Tạo mới</button>
+      <button id="update" disabled>Cập nhật bài đang chọn</button>
+      <button id="clearSel">Bỏ chọn</button>
+    </div>
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const api = {
+      async list(){ const r = await fetch('/api/posts'); return r.json(); },
+      async get(id){ const r = await fetch('/api/posts/'+id); return r.json(); },
+      async create(data,token){ const r=await fetch('/api/posts',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':token},body:JSON.stringify(data)}); return r.json(); },
+      async update(id,data,token){ const r=await fetch('/api/posts/'+id,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':token},body:JSON.stringify(data)}); return r.json(); },
+      async del(id,token){ const r=await fetch('/api/posts/'+id,{method:'DELETE',headers:{'x-admin-token':token}}); return {status:r.status}; },
+      async seed(token){ const r=await fetch('/api/seed',{method:'POST',headers:{'x-admin-token':token}}); return r.json(); },
+    };
+    const state = { selId: null };
+
+    function token(){ return localStorage.getItem('ADMIN_TOKEN') || ''; }
+    function setToken(v){ localStorage.setItem('ADMIN_TOKEN', v||''); }
+
+    $('#saveToken').onclick = () => setToken($('#token').value.trim());
+    $('#seed').onclick = async () => {
+      const t = token(); if(!t) return alert('Nhập token!');
+      const j = await api.seed(t); alert('Seed: '+JSON.stringify(j));
+      load();
+    };
+
+    function rowHtml(p){
+      const tags = (p.tags||[]).map(x=>`<span class="tag">${x}</span>`).join('');
+      return `<tr data-id="${p.id}">
+        <td>${p.title}<div class="muted">${new Date(p.created_at).toLocaleString()}</div></td>
+        <td>${tags}</td>
+        <td>${p.author||''}</td>
+        <td>${p.minutes||''}</td>
+        <td class="flex"><button data-act="edit">Sửa</button><button data-act="del">Xoá</button></td>
+      </tr>`;
+    }
+
+    async function load(){
+      const j = await api.list();
+      const tb = $('#tbl tbody'); tb.innerHTML='';
+      (j.data||[]).forEach(p => tb.insertAdjacentHTML('beforeend', rowHtml(p)));
+      $('#token').value = token();
+    }
+
+    $('#tbl').addEventListener('click', async (e) => {
+      const tr = e.target.closest('tr'); if(!tr) return;
+      const id = tr.getAttribute('data-id');
+      if(e.target.getAttribute('data-act')==='edit'){
+        const j = await api.get(id); const p=j.data;
+        state.selId=id;
+        $('#title').value=p.title||''; $('#excerpt').value=p.excerpt||''; $('#body').value=p.body||'';
+        $('#tags').value=(p.tags||[]).join(','); $('#author').value=p.author||''; $('#minutes').value=p.minutes||5;
+        $('#update').disabled=false;
+      }
+      if(e.target.getAttribute('data-act')==='del'){
+        const ok = confirm('Xoá bài này?'); if(!ok) return;
+        const r = await api.del(id, token());
+        if(r.status===204){ load(); } else alert('Xoá thất bại');
+      }
+    });
+
+    $('#create').onclick = async () => {
+      const data = collect(); const t = token(); if(!t) return alert('Nhập token!');
+      const j = await api.create(data, t);
+      if(j.ok){ clearForm(); load(); } else alert('Tạo thất bại: '+(j.error||''));
+    };
+
+    $('#update').onclick = async () => {
+      if(!state.selId) return;
+      const data = collect(); const t = token(); if(!t) return alert('Nhập token!');
+      const j = await api.update(state.selId, data, t);
+      if(j.ok){ clearForm(); load(); } else alert('Cập nhật thất bại: '+(j.error||''));
+    };
+
+    $('#clearSel').onclick = () => { clearForm(); };
+
+    function collect(){
+      return {
+        title: $('#title').value.trim(),
+        excerpt: $('#excerpt').value.trim(),
+        body: $('#body').value.trim(),
+        tags: $('#tags').value.split(',').map(s=>s.trim()).filter(Boolean),
+        author: $('#author').value.trim() || 'Admin',
+        minutes: Number($('#minutes').value)||5
+      };
+    }
+    function clearForm(){
+      state.selId=null;
+      $('#title').value=$('#excerpt').value=$('#body').value=$('#tags').value=$('#author').value='';
+      $('#minutes').value=5;
+      $('#update').disabled=true;
+    }
+
+    load();
+  </script>
+</body>
+</html>
