@@ -11,7 +11,7 @@
     { "src": "^/api/posts/([^/]+)$", "dest": "vercel-api/api/posts-id.js" },
     { "src": "^/api/seed$", "dest": "vercel-api/api/seed.js" },
 
-    { "handle": "filesystem" },                
-    { "src": "/(.*)", "dest": "/public/index.html" } 
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/public/index.html" }
   ]
 }
