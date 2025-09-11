@@ -797,6 +797,11 @@ function showMeatDetail(meatType, level) {
   document.getElementById('back-to-dict').onclick = () => showPage('dictionary');
   
   showPage('meat-detail');
+  setTimeout(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  const main = document.querySelector('.main');
+  if (main) main.scrollTop = 0;
+  }, 0);
 }
 
 function loadMeatFAQ(meat) {
@@ -1244,3 +1249,4 @@ function formatBlogContent(content) {
 }
 
 console.log('App script loaded successfully'); // Debug log
+

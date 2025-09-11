@@ -247,6 +247,8 @@
                         <button id="take-photo" class="btn btn--primary hidden">📸 Chụp ảnh</button>
                         <button id="retake-photo" class="btn btn--secondary hidden">🔄 Chụp lại</button>
                         <button id="analyze-photo" class="btn btn--primary hidden">🤖 Phân tích AI</button>
+                        <button id="upload-photo" class="btn btn--secondary">📤 Tải ảnh lên</button>
+                        <input id="upload-input" type="file" accept="image/*" class="hidden">
                     </div>
 
                     <div class="detection-steps">
@@ -472,26 +474,7 @@
         <span id="toast-message"></span>
     </div>
 
-    <!-- Did You Know Modal -->
-    <div id="did-you-know-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4>🤔 Bạn có biết?</h4>
-                <button class="modal-close" onclick="closeDiDuKnowModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <p id="did-you-know-text">Đang tải...</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn--primary btn--sm" onclick="closeDiDuKnowModal()">Đã hiểu!</button>
-            </div>
-        </div>
-        <div class="modal-backdrop" onclick="closeDiDuKnowModal()"></div>
-    </div>
-
-    <script src="runtime-config.js"></script>
-    <script src="ai-stub.js"></script>
     <script src="app.js"></script>
-  <script src="blog-api-loader.js"></script>
+    <script src="api_integration.js" defer></script>
 </body>
 </html>

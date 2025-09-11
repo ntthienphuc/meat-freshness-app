@@ -2109,7 +2109,7 @@ select.form-control {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
 .modal-content {
@@ -2301,21 +2301,3 @@ select.form-control {
 .visible {
   display: block !important;
 }
-/* ===== Fix: don't dim the entire app when showing centered boxes/modals ===== */
-.modal-backdrop,
-.backdrop,
-.overlay,
-.dialog-backdrop {
-  background: transparent !important;
-}
-
-.modal,
-.dialog,
-.center-box {
-  background: var(--card-bg, #fff);
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-}
-
-body.modal-open { overflow: hidden; }
