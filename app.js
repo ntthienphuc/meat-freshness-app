@@ -923,55 +923,66 @@ function retakePhoto() {
 }
 
 async function analyzePhoto() {
-  showLoading(true);
-  
-  // Simulate AI analysis delay
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  
-  // Mock AI analysis - randomly select meat type and freshness level
-  const meatTypes = Object.keys(appData.meatTypes);
-  const randomMeatType = meatTypes[Math.floor(Math.random() * meatTypes.length)];
-  const levels = ['5', '4', '3', '2', '1'];
-  const randomLevel = levels[Math.floor(Math.random() * levels.length)];
-  const confidence = Math.floor(Math.random() * 30) + 70; // 70-99%
-  
-  const meat = appData.meatTypes[randomMeatType];
-  const levelData = meat.levels[randomLevel];
-  
-  // Display results
-  const resultContainer = document.getElementById('analysis-result');
-  resultContainer.innerHTML = `
-    <div class="result-header">
-      <div class="result-icon">${meat.icon}</div>
-      <div class="result-info">
-        <h3>🤖 Kết quả phân tích AI</h3>
-        <div class="result-level" style="background-color: ${levelData.color}33; color: ${levelData.color}; border: 1px solid ${levelData.color}44">
-          <div style="width: 12px; height: 12px; background: ${levelData.color}; border-radius: 50%;"></div>
-          ${meat.name} - Level ${randomLevel}: ${levelData.name}
-        </div>
-      </div>
-    </div>
-    <div class="confidence-meter">
-      <div class="confidence-label">Độ tin cậy: ${confidence}%</div>
-      <div class="confidence-bar">
-        <div class="confidence-fill" style="width: ${confidence}%"></div>
-      </div>
-    </div>
-    <div class="result-summary">
-      <strong>🔍 Tình trạng:</strong> ${levelData.properties}
-      <br><br>
-      <strong>⚠️ Khuyến nghị:</strong> ${levelData.warnings}
-      <br><br>
-      <strong>⏰ Thời gian sử dụng:</strong> ${levelData.timeframe}
-    </div>
-    <button class="btn btn--primary" onclick="showMeatDetail('${randomMeatType}', '${randomLevel}')">
-      📖 Xem hướng dẫn chi tiết
-    </button>
-  `;
-  
-  resultContainer.classList.remove('hidden');
-  showLoading(false);
-  showToast('Phân tích AI hoàn tất! 🎉', 'success');
+  try {
+    showLoading(true);
+
+    const canvas = document.getElementById('canvas');
+    const capturedImage = document.getElementById('captured-image');
+    const resultContainer = document.getElementById('analysis-result');
+
+    // Kiểm tra đã chụp ảnh chưa
+    if (!canvas || !capturedImage || capturedImage.classList.contains('hidden')) {
+      showLoading(false);
+      showToast('Bạn chưa chụp ảnh 📸', 'error');
+      return;
+    }
+
+    // Hiển thị trạng thái đang phân tích
+    if (resultContainer) {
+      resultContainer.classList.remove('hidden');
+      resultContainer.innerHTML = `
+        <div class="card"><div class="card__body">
+          <div class="status status--info">⏳ Đang phân tích trên máy chủ...</div>
+        </div></div>`;
+    }
+
+    // Lấy blob JPEG từ canvas (chất lượng 0.9)
+    const file = await new Promise((resolve, reject) => {
+      try {
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error('Không thể tạo ảnh từ canvas'));
+          resolve(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.9);
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+    // Gọi API qua hàm đã có trong api_integration.js
+    if (typeof window.predictViaApi !== 'function') {
+      // Fallback: thử gọi trực tiếp nếu bạn import khác cách
+      if (typeof predictViaApi !== 'function') {
+        throw new Error('Không tìm thấy hàm predictViaApi. Hãy đảm bảo api_integration.js được load trước và đặt API_BASE = "/api".');
+      }
+      await predictViaApi(file);
+    } else {
+      await window.predictViaApi(file);
+    }
+
+    showToast('Phân tích AI hoàn tất! 🎉', 'success');
+  } catch (err) {
+    console.error(err);
+    const resultContainer = document.getElementById('analysis-result');
+    if (resultContainer) {
+      resultContainer.classList.remove('hidden');
+      resultContainer.innerHTML = `
+        <div class="card"><div class="card__body">
+          <div class="status status--error">❌ Lỗi phân tích: ${String(err.message || err)}</div>
+        </div></div>`;
+    }
+  } finally {
+    showLoading(false);
+  }
 }
 
 function stopCamera() {

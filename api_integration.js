@@ -75,3 +75,4 @@ function showError(text){
   analysisBox.innerHTML = `<div class="card"><div class="card__body">
     <div class="status status--error">${text}</div></div></div>`;
 }
+window.predictViaApi = predictViaApi;
