@@ -2,6 +2,7 @@
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
     const FASTAPI_URL = process.env.FASTAPI_URL;
     if (!FASTAPI_URL) return res.status(500).json({ error: "Missing FASTAPI_URL env" });
 
