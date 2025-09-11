@@ -1,3 +1,4 @@
+// api/predict.js
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
@@ -11,16 +12,12 @@ export default async function handler(req, res) {
     const upstream = await fetch(`${FASTAPI_URL.replace(/\/+$/,"")}/predict`, {
       method: "POST",
       headers: { "Content-Type": req.headers["content-type"] || "application/octet-stream" },
-      body: buffer,
+      body: buffer
     });
 
     const text = await upstream.text();
-    try {
-      const json = JSON.parse(text);
-      return res.status(upstream.status).json(json);
-    } catch {
-      return res.status(upstream.status).send(text);
-    }
+    try { return res.status(upstream.status).json(JSON.parse(text)); }
+    catch { return res.status(upstream.status).send(text); }
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: String(e) });
