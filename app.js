@@ -780,29 +780,35 @@ function loadBlogList(category = '', searchTerm = '') {
   filteredPosts.forEach(post => {
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
+    blogCard.onclick = () => window.showBlogPost(post.id);
 
     blogCard.innerHTML = `
-      <div style="cursor: pointer;" onclick="showBlogPost('${post.id}')">
-        <div class="blog-card-category">${post.category}</div>
-        <h3 class="blog-card-title">${post.title}</h3>
-        <p class="blog-card-excerpt">${post.excerpt}</p>
-        <div class="blog-card-meta">
-          <span>👤 ${post.author}</span>
-          <span>⏱️ ${post.readTime}</span>
-        </div>
-        <div class="blog-card-meta" style="margin-top: 8px;">
-          <span>📅 ${formatDate(post.publishDate)}</span>
-          <div>
-            ${post.tags.map(tag => `<span class="tag" style="font-size: 10px; padding: 2px 6px;">${tag}</span>`).join(' ')}
-          </div>
+      <div class="blog-card-category">${post.category}</div>
+      <h3 class="blog-card-title">${post.title}</h3>
+      <p class="blog-card-excerpt">${post.excerpt}</p>
+      <div class="blog-card-meta">
+        <span>👤 ${post.author}</span>
+        <span>⏱️ ${post.readTime}</span>
+      </div>
+      <div class="blog-card-meta" style="margin-top: 8px;">
+        <span>📅 ${formatDate(post.publishDate)}</span>
+        <div>
+          ${post.tags.map(tag => `<span class="tag" style="font-size: 10px; padding: 2px 6px;">${tag}</span>`).join(' ')}
         </div>
       </div>
       <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
-        <button class="btn-save-article" onclick="event.stopPropagation(); handleSaveArticle('blog', '${post.id}', '${post.title.replace(/'/g, "\\'")}');" style="padding: 6px 12px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s;">
+        <button class="btn-save-article" style="padding: 6px 12px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s;">
           💾 Lưu
         </button>
       </div>
     `;
+
+    // Add save button handler separately
+    const saveBtn = blogCard.querySelector('.btn-save-article');
+    saveBtn.onclick = (e) => {
+      e.stopPropagation();
+      handleSaveArticle('blog', post.id, post.title);
+    };
 
     blogList.appendChild(blogCard);
   });
