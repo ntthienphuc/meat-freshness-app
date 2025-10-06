@@ -12,11 +12,14 @@
         <div class="container">
             <div class="header__content">
                 <h1 class="logo" onclick="showPage('home')">🥩 Thịt Tươi Rói</h1>
-                <nav class="nav">
-                    <button class="nav__btn" onclick="showPage('home')">Trang chủ</button>
-                    <button class="nav__btn" onclick="showPage('blog')">Blog</button>
-                    <button class="nav__btn" onclick="showPage('dictionary')">Từ điển</button>
-                    <button class="nav__btn" onclick="showPage('detection')">Kiểm tra thịt</button>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">
+                    <span id="menu-icon">☰</span>
+                </button>
+                <nav class="nav" id="main-nav">
+                    <button class="nav__btn" onclick="showPage('home'); closeMobileMenu();">Trang chủ</button>
+                    <button class="nav__btn" onclick="showPage('blog'); closeMobileMenu();">Blog</button>
+                    <button class="nav__btn" onclick="showPage('dictionary'); closeMobileMenu();">Từ điển</button>
+                    <button class="nav__btn" onclick="showPage('detection'); closeMobileMenu();">Kiểm tra thịt</button>
                 </nav>
                 <button class="admin-icon" onclick="showPage('admin')" title="Quản trị">⚙️</button>
             </div>
@@ -195,7 +198,7 @@
                 </div>
 
                 <div id="meat-content" class="meat-content">
-                    <!-- Meat content will be populated by JS -->
+                    <!-- Meat content with slider will be populated by JS -->
                 </div>
             </div>
         </div>

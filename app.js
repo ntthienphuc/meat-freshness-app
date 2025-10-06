@@ -325,6 +325,7 @@ let isLoggedIn = false;
 let videoStream = null;
 let tipIndex = 0;
 let didYouKnowIndex = 0;
+let sliderValue = 100; // 0-100, maps to levels 1-5
 
 // Navigation functions - Fixed and properly exposed to global scope
 window.showPage = function(pageId) {
@@ -376,6 +377,29 @@ window.showMeatDictionary = function(meatType) {
   setTimeout(() => {
     selectMeatType(meatType);
   }, 100);
+};
+
+// Mobile menu functions
+window.toggleMobileMenu = function() {
+  const nav = document.getElementById('main-nav');
+  const menuIcon = document.getElementById('menu-icon');
+  if (nav) {
+    nav.classList.toggle('active');
+    if (menuIcon) {
+      menuIcon.textContent = nav.classList.contains('active') ? '✕' : '☰';
+    }
+  }
+};
+
+window.closeMobileMenu = function() {
+  const nav = document.getElementById('main-nav');
+  const menuIcon = document.getElementById('menu-icon');
+  if (nav) {
+    nav.classList.remove('active');
+    if (menuIcon) {
+      menuIcon.textContent = '☰';
+    }
+  }
 };
 
 // Initialize the app
@@ -709,42 +733,118 @@ window.selectMeatType = function(meatType) {
 function loadMeatContent(meatType) {
   const meat = appData.meatTypes[meatType];
   if (!meat) return;
-  
+
   const meatContent = document.getElementById('meat-content');
   if (!meatContent) return;
-  
+
   meatContent.innerHTML = `
     <div class="meat-description">
       <p>${meat.description}</p>
     </div>
-    <div class="freshness-levels" id="freshness-levels">
-      <!-- Freshness levels will be populated -->
+    <div class="freshness-slider-container">
+      <h3 style="text-align: center; margin-bottom: var(--space-8); font-family: var(--font-display); color: var(--color-primary);">
+        Trượt để xem các mức độ tươi
+      </h3>
+      <div class="slider-wrapper">
+        <div class="slider-track"></div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value="100"
+          class="slider-input"
+          id="freshness-slider"
+          oninput="updateFreshnessLevel(this.value)"
+        >
+      </div>
+      <div class="slider-labels">
+        <div class="slider-label">Level 1<br>Không an toàn</div>
+        <div class="slider-label">Level 2<br>Gần hỏng</div>
+        <div class="slider-label">Level 3<br>Cần lưu ý</div>
+        <div class="slider-label">Level 4<br>Tươi dùng ngay</div>
+        <div class="slider-label">Level 5<br>Tươi mới</div>
+      </div>
+      <div class="freshness-card" id="freshness-card">
+        <div class="water-fill" id="water-fill"></div>
+        <div class="freshness-card-content" id="card-content">
+          <!-- Content will be populated by slider -->
+        </div>
+      </div>
     </div>
   `;
-  
-  const levelsContainer = document.getElementById('freshness-levels');
-  if (!levelsContainer) return;
-  
-  // Sort levels from 5 to 1
-  const sortedLevels = Object.entries(meat.levels).sort((a, b) => b[0] - a[0]);
-  
-  sortedLevels.forEach(([level, data]) => {
-    const levelCard = document.createElement('div');
-    levelCard.className = 'level-card';
-    levelCard.onclick = () => showMeatDetail(meatType, level);
-    
-    levelCard.innerHTML = `
-      <div class="level-card__header">
-        <div class="level-indicator" style="background-color: ${data.color}"></div>
-        <h4 class="level-card__title">Level ${level}: ${data.name}</h4>
-      </div>
-      <p class="level-card__desc">${data.properties}</p>
-      <button class="btn btn--outline">Chi tiết</button>
-    `;
-    
-    levelsContainer.appendChild(levelCard);
-  });
+
+  // Initialize with level 5
+  updateFreshnessLevel(100);
 }
+
+window.updateFreshnessLevel = function(value) {
+  sliderValue = parseInt(value);
+
+  // Map 0-100 to levels 1-5
+  let level;
+  if (sliderValue <= 20) level = '1';
+  else if (sliderValue <= 40) level = '2';
+  else if (sliderValue <= 60) level = '3';
+  else if (sliderValue <= 80) level = '4';
+  else level = '5';
+
+  const meat = appData.meatTypes[currentMeatType];
+  const levelData = meat.levels[level];
+
+  // Update water fill height and color
+  const waterFill = document.getElementById('water-fill');
+  if (waterFill) {
+    waterFill.style.height = `${sliderValue}%`;
+    waterFill.style.setProperty('--level-color', levelData.color);
+    waterFill.style.background = levelData.color;
+  }
+
+  // Update card content
+  const cardContent = document.getElementById('card-content');
+  if (cardContent) {
+    cardContent.innerHTML = `
+      <div class="freshness-card-header">
+        <div class="level-percentage" style="color: ${levelData.color};">${sliderValue}%</div>
+        <div class="level-info">
+          <h3>Level ${level}: ${levelData.name}</h3>
+          <p>${meat.name}</p>
+        </div>
+      </div>
+      <div class="freshness-details">
+        <div class="detail-item">
+          <h5>🔍 Tính chất</h5>
+          <p>${levelData.properties}</p>
+        </div>
+        <div class="detail-item">
+          <h5>👀 Dấu hiệu nhận biết</h5>
+          <p>${levelData.signs}</p>
+        </div>
+        <div class="detail-item">
+          <h5>❄️ Cách bảo quản</h5>
+          <p>${levelData.storage}</p>
+        </div>
+        <div class="detail-item">
+          <h5>🍳 Chế biến</h5>
+          <p>${levelData.cooking}</p>
+        </div>
+        <div class="detail-item">
+          <h5>⚠️ Cảnh báo</h5>
+          <p>${levelData.warnings}</p>
+        </div>
+        <div class="detail-item">
+          <h5>⏰ Thời gian sử dụng</h5>
+          <p>${levelData.timeframe}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // Update the freshness card border color
+  const freshnessCard = document.getElementById('freshness-card');
+  if (freshnessCard) {
+    freshnessCard.style.borderColor = levelData.color;
+  }
+};
 
 function showMeatDetail(meatType, level) {
   currentMeatType = meatType;
