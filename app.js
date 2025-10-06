@@ -385,10 +385,20 @@ window.showMeatDictionary = function(meatType) {
 window.toggleMobileMenu = function() {
   const nav = document.getElementById('main-nav');
   const menuIcon = document.getElementById('menu-icon');
+  const toggle = document.querySelector('.mobile-menu-toggle');
+
   if (nav) {
-    nav.classList.toggle('active');
+    const isOpen = nav.classList.toggle('active');
     if (menuIcon) {
-      menuIcon.textContent = nav.classList.contains('active') ? '✕' : '☰';
+      menuIcon.textContent = isOpen ? '✕' : '☰';
+    }
+    if (toggle) {
+      toggle.setAttribute('aria-expanded', isOpen);
+    }
+
+    // Add haptic feedback on mobile
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
     }
   }
 };
@@ -1078,22 +1088,48 @@ function resetDetectionState() {
 
 async function startCamera() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'environment' } 
+    showLoading(true);
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
     });
-    
+
+    showLoading(false);
+
     const video = document.getElementById('video');
+    const container = document.querySelector('.camera-container');
     video.srcObject = stream;
     videoStream = stream;
-    
-    // Update button states
-    document.getElementById('start-camera').classList.add('hidden');
-    document.getElementById('take-photo').classList.remove('hidden');
-    
-    showToast('Camera đã được kích hoạt 📹', 'success');
+
+    // Add ready state animation
+    if (container) {
+      container.classList.add('camera-ready');
+    }
+
+    // Update button states with animation
+    const startBtn = document.getElementById('start-camera');
+    const takeBtn = document.getElementById('take-photo');
+
+    if (startBtn) startBtn.classList.add('hidden');
+    if (takeBtn) {
+      takeBtn.classList.remove('hidden');
+      takeBtn.style.animation = 'fadeIn 0.3s ease-out';
+    }
+
+    // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate([50, 30, 50]);
+    }
+
+    showToast('Camera đã sẵn sàng 📹', 'success');
   } catch (error) {
+    showLoading(false);
     console.error('Error accessing camera:', error);
-    showToast('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.', 'error');
+    showToast('Không thể truy cập camera. Vui lòng kiểm tra quyền.', 'error');
   }
 }
 
@@ -1102,30 +1138,60 @@ function takePhoto() {
   const canvas = document.getElementById('canvas');
   const capturedImage = document.getElementById('captured-image');
   const capturedImg = document.getElementById('captured-img');
-  
+  const container = document.querySelector('.camera-container');
+
+  // Flash effect
+  if (container) {
+    container.style.animation = 'flash 0.3s';
+    setTimeout(() => {
+      container.style.animation = '';
+    }, 300);
+  }
+
+  // Haptic feedback
+  if ('vibrate' in navigator) {
+    navigator.vibrate(30);
+  }
+
   // Set canvas dimensions to match video
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  
+
   // Draw current video frame to canvas
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0);
-  
-  // Get image data
-  const imageDataUrl = canvas.toDataURL('image/jpeg');
+
+  // Get image data with high quality
+  const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
   capturedImg.src = imageDataUrl;
-  
-  // Show captured image, hide video
+
+  // Show captured image, hide video with transition
   video.style.display = 'none';
   capturedImage.classList.remove('hidden');
-  
+  capturedImage.style.animation = 'fadeIn 0.4s ease-out';
+
+  // Remove camera ready state
+  if (container) {
+    container.classList.remove('camera-ready');
+  }
+
   // Update button states
   document.getElementById('take-photo').classList.add('hidden');
   document.getElementById('retake-photo').classList.remove('hidden');
   document.getElementById('analyze-photo').classList.remove('hidden');
-  
+
   showToast('Đã chụp ảnh thành công! 📸', 'success');
 }
+
+// Add flash animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; background: white; }
+  }
+`;
+document.head.appendChild(style);
 
 function retakePhoto() {
   const video = document.getElementById('video');
