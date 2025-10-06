@@ -797,9 +797,9 @@ function loadBlogList(category = '', searchTerm = '') {
           </div>
         </div>
       </div>
-      <div style="margin-top: 12px; display: flex; gap: 8px;">
-        <button class="btn-save-article" onclick="event.stopPropagation(); handleSaveArticle('blog', '${post.id}', '${post.title.replace(/'/g, "\\'")}');" style="flex: 1; padding: 8px 16px; background: var(--color-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
-          💾 Lưu bài viết
+      <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+        <button class="btn-save-article" onclick="event.stopPropagation(); handleSaveArticle('blog', '${post.id}', '${post.title.replace(/'/g, "\\'")}');" style="padding: 6px 12px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s;">
+          💾 Lưu
         </button>
       </div>
     `;
@@ -893,6 +893,8 @@ function showBlogPost(postId) {
   loadRelatedPosts(post);
   showPage('blog-post');
 }
+
+window.showBlogPost = showBlogPost;
 
 function loadRelatedPosts(currentPost) {
   const relatedGrid = document.getElementById('related-posts-grid');
