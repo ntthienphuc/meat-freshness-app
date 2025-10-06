@@ -5,6 +5,25 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
+// Safe base64 encoding for Unicode strings
+function safeBtoa(str) {
+  try {
+    return btoa(unescape(encodeURIComponent(str)));
+  } catch (e) {
+    console.warn('btoa encoding failed, using fallback', e);
+    return Buffer.from(str).toString('base64');
+  }
+}
+
+function safeAtob(str) {
+  try {
+    return decodeURIComponent(escape(atob(str)));
+  } catch (e) {
+    console.warn('atob decoding failed, using fallback', e);
+    return Buffer.from(str, 'base64').toString();
+  }
+}
+
 // Initialize Supabase client
 const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
@@ -377,7 +396,10 @@ window.authSystem = {
   isAuthenticated,
   isAdmin,
   getCurrentUser,
-  getCurrentProfile
+  getCurrentProfile,
+  // Safe encoding utilities
+  safeBtoa,
+  safeAtob
 };
 
 // Auto-initialize on load
