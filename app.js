@@ -511,9 +511,9 @@ function loadHomePage() {
 function loadTips() {
   const tipsContainer = document.getElementById('tips-container');
   if (!tipsContainer) return;
-  
+
   tipsContainer.innerHTML = '';
-  appData.tips.forEach(tip => {
+  appData.tips.slice(0, 2).forEach(tip => {
     const tipCard = document.createElement('div');
     tipCard.className = 'tip-card';
     tipCard.onclick = () => {
@@ -521,7 +521,7 @@ function loadTips() {
         showBlogPost(tip.linkToBlog);
       }
     };
-    
+
     tipCard.innerHTML = `
       <span class="tip-icon">${tip.icon}</span>
       <div>
@@ -529,7 +529,7 @@ function loadTips() {
         <span style="font-weight: normal; font-size: 14px;">${tip.content}</span>
       </div>
     `;
-    
+
     tipsContainer.appendChild(tipCard);
   });
 }
@@ -538,7 +538,7 @@ function loadFeaturedBlogs() {
   const featuredContainer = document.getElementById('featured-blogs');
   if (!featuredContainer) return;
   
-  const featuredPosts = appData.blogPosts.filter(post => post.featured).slice(0, 4);
+  const featuredPosts = appData.blogPosts.filter(post => post.featured).slice(0, 2);
   featuredContainer.innerHTML = '';
   
   featuredPosts.forEach(post => {

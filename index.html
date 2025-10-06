@@ -33,6 +33,10 @@
                     <button class="nav__btn" onclick="showPage('blog'); closeMobileMenu();">Blog</button>
                     <button class="nav__btn" onclick="showPage('dictionary'); closeMobileMenu();">Từ điển</button>
                     <button class="nav__btn" onclick="showPage('detection'); closeMobileMenu();">Kiểm tra thịt</button>
+                    <button class="nav__btn nav__btn--user" id="mobile-user-btn" onclick="handleUserIconClick(); closeMobileMenu();">
+                        <span id="mobile-user-icon">👤</span>
+                        <span id="mobile-user-label">Tài khoản</span>
+                    </button>
                 </nav>
                 <div class="header-actions">
                     <button class="user-icon-btn" id="user-icon-btn" onclick="handleUserIconClick()" title="Tài khoản">

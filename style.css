@@ -153,6 +153,10 @@ p {
   padding: var(--space-2);
   color: var(--color-primary);
   font-size: 1.5rem;
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .mobile-menu-toggle:hover {
@@ -197,6 +201,7 @@ p {
 .nav__btn:hover {
   color: var(--color-primary);
   background: var(--color-gray-50);
+  transform: translateY(-1px);
 }
 
 /* Mobile Navigation */
@@ -813,8 +818,8 @@ p {
 }
 
 .tip-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   border-color: var(--color-primary);
 }
 
@@ -1005,8 +1010,8 @@ p {
 }
 
 .blog-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
   border-color: var(--color-primary);
 }
 
@@ -2724,7 +2729,8 @@ p {
 .user-icon-btn:hover {
   background: var(--color-gray-50);
   border-color: var(--color-primary);
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(232, 93, 117, 0.2);
 }
 
 .user-icon-btn.authenticated {
@@ -2735,6 +2741,29 @@ p {
 .user-icon-btn.admin {
   border-color: var(--color-secondary);
   background: linear-gradient(135deg, rgba(209, 67, 97, 0.1), rgba(232, 93, 117, 0.1));
+}
+
+.nav__btn--user {
+  display: none;
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  justify-content: flex-start;
+  gap: var(--space-3);
+}
+
+#mobile-user-icon {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    display: none;
+  }
+
+  .nav__btn--user {
+    display: flex;
+  }
 }
 
 /* Save Button for Articles */
