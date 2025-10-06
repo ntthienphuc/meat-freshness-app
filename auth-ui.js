@@ -180,12 +180,18 @@ async function loadSavedArticles() {
   listEl.innerHTML = saved.map(item => {
     const date = new Date(item.saved_at).toLocaleDateString('vi-VN');
     const typeIcon = item.article_type === 'blog' ? '📝' : '📖';
+    const clickAction = item.article_type === 'blog'
+      ? `showBlogPost('${item.article_id}')`
+      : `showMeatDetail('${item.article_id}')`;
+
     return '<div class="saved-item">' +
-      '<div class="saved-item-header">' +
+      '<div class="saved-item-header" style="cursor: pointer;" onclick="' + clickAction + '; closeProfileModal();">' +
       '<span class="saved-item-title">' + typeIcon + ' ' + item.article_title + '</span>' +
-      '<button class="btn btn--sm btn--outline" onclick="removeSavedArticle(\'' + item.article_type + '\', \'' + item.article_id + '\')">Xóa</button>' +
       '</div>' +
-      '<div class="saved-item-date">Đã lưu: ' + date + '</div>' +
+      '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">' +
+      '<span class="saved-item-date">Đã lưu: ' + date + '</span>' +
+      '<button class="btn btn--sm btn--outline" onclick="event.stopPropagation(); removeSavedArticle(\'' + item.article_type + '\', \'' + item.article_id + '\')">Xóa</button>' +
+      '</div>' +
       '</div>';
   }).join('');
 }

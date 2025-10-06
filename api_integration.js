@@ -52,6 +52,16 @@ function renderPredictResult(data) {
          📖 Xem hướng dẫn — Thịt Heo • Level ${targetLevel}
        </button>` : "";
 
+  const imageUrl = capturedImgEl ? capturedImgEl.src : '';
+  const resultData = { meat_type, freshness_percent, label_vi, label_en, confidence };
+
+  const saveBtn = `
+    <button class="btn btn--success btn--sm"
+            onclick="handleSaveDetection('${meat_type}', ${targetLevel}, '${imageUrl}', ${JSON.stringify(resultData).replace(/"/g, '&quot;')})"
+            style="background: var(--color-success); border-color: var(--color-success);">
+      💾 Lưu kết quả
+    </button>`;
+
   analysisBox.classList.remove("hidden");
   analysisBox.innerHTML = `
     <div class="card"><div class="card__body">
@@ -61,7 +71,10 @@ function renderPredictResult(data) {
       <p style="margin-top:10px;">
         (Model: <code>${label_en}</code>; độ tự tin ~ ${(confidence*100).toFixed(1)}%)
       </p>
-      <div style="display:flex; gap:8px; margin-top:12px;">${goDetailBtn}</div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        ${goDetailBtn}
+        ${saveBtn}
+      </div>
     </div></div>`;
 }
 

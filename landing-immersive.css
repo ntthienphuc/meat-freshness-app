@@ -787,6 +787,11 @@
   .meat-visual-grid {
     grid-template-columns: 1fr;
   }
+
+  .scroll-indicator {
+    bottom: var(--space-20);
+    padding-bottom: var(--space-8);
+  }
 }
 
 @media (max-width: 480px) {
@@ -809,5 +814,15 @@
   .btn-immersive {
     padding: var(--space-4) var(--space-6);
     font-size: 1rem;
+  }
+
+  .scroll-indicator {
+    bottom: var(--space-20);
+    padding-bottom: var(--space-12);
+    font-size: 0.75rem;
+  }
+
+  .scroll-arrow {
+    font-size: 1.25rem;
   }
 }

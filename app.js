@@ -777,24 +777,30 @@ function loadBlogList(category = '', searchTerm = '') {
   filteredPosts.forEach(post => {
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
-    blogCard.onclick = () => showBlogPost(post.id);
-    
+
     blogCard.innerHTML = `
-      <div class="blog-card-category">${post.category}</div>
-      <h3 class="blog-card-title">${post.title}</h3>
-      <p class="blog-card-excerpt">${post.excerpt}</p>
-      <div class="blog-card-meta">
-        <span>👤 ${post.author}</span>
-        <span>⏱️ ${post.readTime}</span>
-      </div>
-      <div class="blog-card-meta" style="margin-top: 8px;">
-        <span>📅 ${formatDate(post.publishDate)}</span>
-        <div>
-          ${post.tags.map(tag => `<span class="tag" style="font-size: 10px; padding: 2px 6px;">${tag}</span>`).join(' ')}
+      <div style="cursor: pointer;" onclick="showBlogPost('${post.id}')">
+        <div class="blog-card-category">${post.category}</div>
+        <h3 class="blog-card-title">${post.title}</h3>
+        <p class="blog-card-excerpt">${post.excerpt}</p>
+        <div class="blog-card-meta">
+          <span>👤 ${post.author}</span>
+          <span>⏱️ ${post.readTime}</span>
+        </div>
+        <div class="blog-card-meta" style="margin-top: 8px;">
+          <span>📅 ${formatDate(post.publishDate)}</span>
+          <div>
+            ${post.tags.map(tag => `<span class="tag" style="font-size: 10px; padding: 2px 6px;">${tag}</span>`).join(' ')}
+          </div>
         </div>
       </div>
+      <div style="margin-top: 12px; display: flex; gap: 8px;">
+        <button class="btn-save-article" onclick="event.stopPropagation(); handleSaveArticle('blog', '${post.id}', '${post.title.replace(/'/g, "\\'")}');" style="flex: 1; padding: 8px 16px; background: var(--color-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
+          💾 Lưu bài viết
+        </button>
+      </div>
     `;
-    
+
     blogList.appendChild(blogCard);
   });
 }
@@ -1616,6 +1622,44 @@ function formatBlogContent(content) {
 
 console.log('App script loaded successfully'); // Debug log
 
+// ============================================
+// SAVE ARTICLE HANDLER
+// ============================================
+
+window.handleSaveArticle = async function(articleType, articleId, articleTitle) {
+  if (!window.authSystem || !window.authSystem.isAuthenticated()) {
+    showToast('Vui lòng đăng nhập để lưu bài viết', 'error');
+    openAuthModal();
+    return;
+  }
+
+  const result = await window.authSystem.saveArticle(articleType, articleId, articleTitle);
+  if (!result.error) {
+    // Update button state
+    const buttons = document.querySelectorAll(`button[onclick*="${articleId}"]`);
+    buttons.forEach(btn => {
+      if (btn.textContent.includes('Lưu')) {
+        btn.style.background = 'var(--color-success)';
+        btn.innerHTML = '✓ Đã lưu';
+        btn.disabled = true;
+      }
+    });
+  }
+};
+
+// ============================================
+// SAVE DETECTION RESULT HANDLER
+// ============================================
+
+window.handleSaveDetection = async function(meatType, freshnessLevel, imageUrl, resultData) {
+  if (!window.authSystem || !window.authSystem.isAuthenticated()) {
+    showToast('Vui lòng đăng nhập để lưu kết quả', 'error');
+    openAuthModal();
+    return;
+  }
+
+  await window.authSystem.saveDetectionHistory(meatType, freshnessLevel, imageUrl, resultData);
+};
 
 // ============================================
 // AUTH UI HANDLERS
