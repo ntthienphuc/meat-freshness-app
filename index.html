@@ -8,8 +8,18 @@
     <title>🥩 Thịt Tươi Rói - Ứng dụng kiểm tra độ tươi thịt</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="landing-immersive.css">
+    <link rel="stylesheet" href="animated-background.css">
 </head>
 <body>
+    <!-- Animated Background Pattern -->
+    <div class="meat-pattern-container">
+        <div class="meat-icon-float">🥩</div>
+        <div class="meat-icon-float">🐷</div>
+        <div class="meat-icon-float">🐮</div>
+        <div class="meat-icon-float">🐔</div>
+        <div class="meat-icon-float">✨</div>
+        <div class="meat-icon-float">🔬</div>
+    </div>
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -24,7 +34,11 @@
                     <button class="nav__btn" onclick="showPage('dictionary'); closeMobileMenu();">Từ điển</button>
                     <button class="nav__btn" onclick="showPage('detection'); closeMobileMenu();">Kiểm tra thịt</button>
                 </nav>
-                <button class="admin-icon" onclick="showPage('admin')" title="Quản trị">⚙️</button>
+                <div class="header-actions">
+                    <button class="user-icon-btn" id="user-icon-btn" onclick="handleUserIconClick()" title="Tài khoản">
+                        <span id="user-icon">👤</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -729,6 +743,114 @@
         <span id="toast-message"></span>
     </div>
 
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeAuthModal()"></div>
+        <div class="modal-content auth-modal-content">
+            <button class="modal-close" onclick="closeAuthModal()">×</button>
+
+            <!-- Toggle between Login/Register -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')">Đăng nhập</button>
+                <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">Đăng ký</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form active">
+                <h2 class="auth-title">Đăng nhập</h2>
+                <p class="auth-subtitle">Chào mừng trở lại! 👋</p>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Tên đăng nhập</label>
+                        <input type="text" id="login-username" class="form-input" required placeholder="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <input type="password" id="login-password" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--block">Đăng nhập</button>
+                </form>
+
+                <p class="auth-footer">
+                    Chưa có tài khoản? <a href="#" onclick="switchAuthTab('register'); return false;">Đăng ký ngay</a>
+                </p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form">
+                <h2 class="auth-title">Đăng ký tài khoản</h2>
+                <p class="auth-subtitle">Tham gia cộng đồng thịt tươi! 🥩</p>
+
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Tên đăng nhập</label>
+                        <input type="text" id="register-username" class="form-input" required placeholder="username" minlength="3">
+                    </div>
+                    <div class="form-group">
+                        <label>Tên hiển thị</label>
+                        <input type="text" id="register-displayname" class="form-input" placeholder="Tên của bạn">
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <input type="password" id="register-password" class="form-input" required placeholder="••••••••" minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Xác nhận mật khẩu</label>
+                        <input type="password" id="register-password-confirm" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--block">Tạo tài khoản</button>
+                </form>
+
+                <p class="auth-footer">
+                    Đã có tài khoản? <a href="#" onclick="switchAuthTab('login'); return false;">Đăng nhập</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeProfileModal()"></div>
+        <div class="modal-content profile-modal-content">
+            <button class="modal-close" onclick="closeProfileModal()">×</button>
+
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <h2 class="profile-name" id="profile-display-name">User</h2>
+                    <p class="profile-username" id="profile-username">@username</p>
+                    <span class="profile-role" id="profile-role">User</span>
+                </div>
+            </div>
+
+            <div class="profile-tabs">
+                <button class="profile-tab active" onclick="switchProfileTab('history')">Lịch sử kiểm tra</button>
+                <button class="profile-tab" onclick="switchProfileTab('saved')">Bài viết đã lưu</button>
+            </div>
+
+            <div id="profile-history" class="profile-tab-content active">
+                <h3>Lịch sử kiểm tra thịt</h3>
+                <div id="history-list" class="history-list">
+                    <p class="empty-state">Chưa có lịch sử kiểm tra</p>
+                </div>
+            </div>
+
+            <div id="profile-saved" class="profile-tab-content">
+                <h3>Bài viết đã lưu</h3>
+                <div id="saved-list" class="saved-list">
+                    <p class="empty-state">Chưa có bài viết đã lưu</p>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="btn btn--secondary" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="auth.js"></script>
+    <script src="auth-ui.js"></script>
     <script src="app.js"></script>
     <script src="api_integration.js" defer></script>
 </body>

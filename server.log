@@ -1,5 +1,5 @@
 
-> meat-freshness-frontend@8.0.0 dev
+> meat-freshness-frontend@10.0.0 dev
 > npx http-server -p 3000 -c-1
 
 Starting up http-server, serving ./
@@ -17,9 +17,12 @@ Serve Brotli Files: false
 Default File Extension: none
 
 Available on:
-  http://127.0.0.1:3000
   http://169.254.8.1:3000
   http://169.254.9.1:3000
   http://169.254.169.1:3000
+  http://127.0.0.1:3000
 Hit CTRL-C to stop the server
 
+[2025-10-06T07:28:36.099Z]  "GET /" "curl/8.14.1"
+(node:2850) [DEP0066] DeprecationWarning: OutgoingMessage.prototype._headers is deprecated
+(Use `node --trace-deprecation ...` to show where the warning was created)
