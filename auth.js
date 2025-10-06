@@ -347,6 +347,25 @@ async function getDetectionHistory(limit = 20) {
   }
 }
 
+async function deleteDetectionHistory(historyId) {
+  if (!currentUser) {
+    showToast('Vui lòng đăng nhập', 'error');
+    return { error: 'Not authenticated' };
+  }
+
+  try {
+    const history = getFromStorage(STORAGE_KEYS.DETECTION_HISTORY) || [];
+    const updatedHistory = history.filter(h => h.id !== historyId || h.user_id !== currentUser.id);
+    saveToStorage(STORAGE_KEYS.DETECTION_HISTORY, updatedHistory);
+    showToast('Đã xóa lịch sử', 'success');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting detection history:', error);
+    showToast('Không thể xóa lịch sử', 'error');
+    return { error: error.message };
+  }
+}
+
 // ============================================
 // STORAGE REMINDERS
 // ============================================
@@ -459,6 +478,7 @@ window.authSystem = {
   isArticleSaved,
   saveDetectionHistory,
   getDetectionHistory,
+  deleteDetectionHistory,
   saveStorageReminder,
   getStorageReminders,
   isAuthenticated,

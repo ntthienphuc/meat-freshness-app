@@ -352,6 +352,9 @@ window.showPage = function(pageId) {
     case 'blog':
       loadBlogPage();
       break;
+    case 'blog-post':
+      // Blog post page content loaded by showBlogPost()
+      break;
     case 'dictionary':
       loadDictionaryPage();
       break;
@@ -851,9 +854,17 @@ function showBlogPost(postId) {
   const blogPostContent = document.getElementById('blog-post-content');
   if (!blogPostContent) return;
   
+  const isSaved = window.authSystem?.isArticleSaved('blog', post.id);
+
   blogPostContent.innerHTML = `
     <div class="blog-post-header">
-      <div class="blog-card-category">${post.category}</div>
+      <div class="blog-post-header-top">
+        <div class="blog-card-category">${post.category}</div>
+        <button class="save-article-btn ${isSaved ? 'saved' : ''}" onclick="toggleSaveArticle('blog', '${post.id}', '${post.title.replace(/'/g, "\\'")}')">
+          <span>${isSaved ? '💾' : '🔖'}</span>
+          <span>${isSaved ? 'Đã lưu' : 'Lưu bài viết'}</span>
+        </button>
+      </div>
       <h1 class="blog-post-title">${post.title}</h1>
       <div class="blog-post-meta">
         <div class="meta-item">
@@ -1841,7 +1852,10 @@ async function loadUserHistory() {
       <div class="history-item">
         <div class="history-item-header">
           <span class="history-item-title">${meatTypes[item.meat_type] || item.meat_type}</span>
-          <span class="freshness-badge level-${item.freshness_level}">Độ tươi: ${item.freshness_level}/5</span>
+          <div class="history-item-actions">
+            <span class="freshness-badge level-${item.freshness_level}">Độ tươi: ${item.freshness_level}/5</span>
+            <button class="btn btn--sm btn--outline" onclick="deleteHistoryItem('${item.id}')">Xóa</button>
+          </div>
         </div>
         <div class="history-item-meta">
           <span>📅 ${date}</span>
@@ -1849,6 +1863,13 @@ async function loadUserHistory() {
       </div>
     `;
   }).join('');
+}
+
+async function deleteHistoryItem(historyId) {
+  if (!window.authSystem) return;
+
+  await window.authSystem.deleteDetectionHistory(historyId);
+  await loadUserHistory();
 }
 
 async function loadSavedArticles() {
@@ -1884,6 +1905,28 @@ async function removeSavedArticle(type, id) {
   await window.authSystem.unsaveArticle(type, id);
   await loadSavedArticles();
 }
+
+async function toggleSaveArticle(type, id, title) {
+  if (!window.authSystem) {
+    showToast('Vui lòng đăng nhập để lưu bài viết', 'error');
+    return;
+  }
+
+  const isSaved = window.authSystem.isArticleSaved(type, id);
+
+  if (isSaved) {
+    await window.authSystem.unsaveArticle(type, id);
+  } else {
+    await window.authSystem.saveArticle(type, id, title);
+  }
+
+  // Reload blog post to update button state
+  if (currentBlogPost) {
+    showBlogPost(currentBlogPost.id);
+  }
+}
+
+window.toggleSaveArticle = toggleSaveArticle;
 
 // ============================================
 // UPDATE USER ICON BASED ON AUTH STATE
