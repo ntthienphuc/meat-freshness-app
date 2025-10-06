@@ -414,6 +414,71 @@ window.closeMobileMenu = function() {
   }
 };
 
+// Scroll Animations
+function initializeScrollAnimations() {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -100px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+      }
+    });
+  }, observerOptions);
+
+  // Observe all scroll-reveal elements
+  document.querySelectorAll('.scroll-reveal').forEach(el => {
+    observer.observe(el);
+  });
+}
+
+// Counter Animations
+function initializeCounterAnimations() {
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !entry.target.dataset.counted) {
+        const target = entry.target;
+        const targetValue = parseInt(target.dataset.stat);
+        animateCounter(target.querySelector('.stat-number-modern'), 0, targetValue, 2000);
+        target.dataset.counted = 'true';
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.stat-card-modern').forEach(card => {
+    counterObserver.observe(card);
+  });
+}
+
+function animateCounter(element, start, end, duration) {
+  const startTime = performance.now();
+  const isPercent = element.textContent.includes('%');
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing function for smooth animation
+    const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+    const current = Math.floor(start + (end - start) * easeOutQuart);
+
+    if (isPercent) {
+      element.innerHTML = current + '<span class="stat-unit">%</span>';
+    } else {
+      element.textContent = current.toLocaleString();
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM Content Loaded'); // Debug log
@@ -421,6 +486,8 @@ document.addEventListener('DOMContentLoaded', function() {
   showPage('home');
   initializeCamera();
   initializeAdminControls();
+  initializeScrollAnimations();
+  initializeCounterAnimations();
 
   // Initialize blog search
   const blogSearch = document.getElementById('blog-search');
