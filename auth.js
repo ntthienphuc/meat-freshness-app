@@ -1,9 +1,7 @@
 /* ============================================
    AUTHENTICATION SYSTEM
-   Using Supabase for backend
+   Using Local Storage for prototype
    ============================================ */
-
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 // Safe base64 encoding for Unicode strings
 function safeBtoa(str) {
@@ -11,7 +9,9 @@ function safeBtoa(str) {
     return btoa(unescape(encodeURIComponent(str)));
   } catch (e) {
     console.warn('btoa encoding failed, using fallback', e);
-    return Buffer.from(str).toString('base64');
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    return btoa(String.fromCharCode(...data));
   }
 }
 
@@ -20,58 +20,90 @@ function safeAtob(str) {
     return decodeURIComponent(escape(atob(str)));
   } catch (e) {
     console.warn('atob decoding failed, using fallback', e);
-    return Buffer.from(str, 'base64').toString();
+    const decoded = atob(str);
+    const decoder = new TextDecoder();
+    return decoder.decode(new Uint8Array([...decoded].map(c => c.charCodeAt(0))));
   }
 }
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Current user state
 let currentUser = null;
 let currentProfile = null;
 
-// Admin credentials (stored in code for simplicity - in production use env vars)
+// Admin credentials
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'thittuoi2025';
+
+// LocalStorage keys
+const STORAGE_KEYS = {
+  USERS: 'meat_app_users',
+  CURRENT_USER: 'meat_app_current_user',
+  DETECTION_HISTORY: 'meat_app_detection_history',
+  SAVED_ARTICLES: 'meat_app_saved_articles',
+  STORAGE_REMINDERS: 'meat_app_storage_reminders',
+  SEARCH_QUERIES: 'meat_app_search_queries'
+};
+
+// ============================================
+// LOCAL STORAGE HELPERS
+// ============================================
+
+function getFromStorage(key) {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    console.error('Error reading from storage:', e);
+    return null;
+  }
+}
+
+function saveToStorage(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    console.error('Error saving to storage:', e);
+    return false;
+  }
+}
+
+function generateId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
 
 // ============================================
 // AUTH STATE MANAGEMENT
 // ============================================
 
-async function initializeAuth() {
-  if (!supabase) {
-    console.warn('Supabase not configured - running in demo mode');
-    return;
-  }
-
+function initializeAuth() {
   // Check for existing session
-  const { data: { session } } = await supabase.auth.getSession();
+  const savedUser = getFromStorage(STORAGE_KEYS.CURRENT_USER);
 
-  if (session) {
-    currentUser = session.user;
-    await loadUserProfile();
+  if (savedUser) {
+    currentUser = savedUser;
+    currentProfile = savedUser.profile;
     updateUIForAuthState(true);
   } else {
     updateUIForAuthState(false);
   }
 
-  // Listen for auth changes
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      currentUser = session.user;
-      await loadUserProfile();
-      updateUIForAuthState(true);
-      showToast('Đăng nhập thành công! 🎉', 'success');
-    } else if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      currentProfile = null;
-      updateUIForAuthState(false);
-      showToast('Đã đăng xuất', 'success');
-    }
-  });
+  // Initialize storage if needed
+  if (!getFromStorage(STORAGE_KEYS.USERS)) {
+    saveToStorage(STORAGE_KEYS.USERS, []);
+  }
+  if (!getFromStorage(STORAGE_KEYS.DETECTION_HISTORY)) {
+    saveToStorage(STORAGE_KEYS.DETECTION_HISTORY, []);
+  }
+  if (!getFromStorage(STORAGE_KEYS.SAVED_ARTICLES)) {
+    saveToStorage(STORAGE_KEYS.SAVED_ARTICLES, []);
+  }
+  if (!getFromStorage(STORAGE_KEYS.STORAGE_REMINDERS)) {
+    saveToStorage(STORAGE_KEYS.STORAGE_REMINDERS, []);
+  }
+  if (!getFromStorage(STORAGE_KEYS.SEARCH_QUERIES)) {
+    saveToStorage(STORAGE_KEYS.SEARCH_QUERIES, []);
+  }
 }
 
 // ============================================
@@ -79,48 +111,38 @@ async function initializeAuth() {
 // ============================================
 
 async function registerUser(username, password, displayName = '') {
-  if (!supabase) {
-    showToast('Supabase chưa được cấu hình', 'error');
-    return { error: 'No Supabase' };
-  }
-
   try {
-    // Create email from username (internal use)
-    const email = `${username}@thittuoi.local`;
+    const users = getFromStorage(STORAGE_KEYS.USERS) || [];
 
-    // Sign up with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-          display_name: displayName || username
-        }
-      }
-    });
+    // Check if username already exists
+    if (users.find(u => u.username === username)) {
+      showToast('Tên đăng nhập đã tồn tại', 'error');
+      return { error: 'Username already exists' };
+    }
 
-    if (authError) throw authError;
-
-    // Determine role (admin if credentials match)
+    // Determine role
     const role = (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) ? 'admin' : 'user';
 
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert({
-        id: authData.user.id,
-        username,
-        display_name: displayName || username,
-        role
-      });
+    // Create new user
+    const newUser = {
+      id: generateId(),
+      username,
+      password: safeBtoa(password), // Simple encoding (not secure, just for prototype)
+      display_name: displayName || username,
+      role,
+      created_at: new Date().toISOString()
+    };
 
-    if (profileError) throw profileError;
+    users.push(newUser);
+    saveToStorage(STORAGE_KEYS.USERS, users);
 
-    return { data: authData, error: null };
+    // Auto login after registration
+    const loginResult = await loginUser(username, password);
+    return loginResult;
   } catch (error) {
     console.error('Registration error:', error);
-    return { data: null, error };
+    showToast('Lỗi khi đăng ký', 'error');
+    return { error };
   }
 }
 
@@ -129,25 +151,45 @@ async function registerUser(username, password, displayName = '') {
 // ============================================
 
 async function loginUser(username, password) {
-  if (!supabase) {
-    showToast('Supabase chưa được cấu hình', 'error');
-    return { error: 'No Supabase' };
-  }
-
   try {
-    const email = `${username}@thittuoi.local`;
+    const users = getFromStorage(STORAGE_KEYS.USERS) || [];
+    const encodedPassword = safeBtoa(password);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
+    const user = users.find(u => u.username === username && u.password === encodedPassword);
+
+    if (!user) {
+      showToast('Tên đăng nhập hoặc mật khẩu không đúng', 'error');
+      return { error: 'Invalid credentials' };
+    }
+
+    // Set current user
+    currentUser = {
+      id: user.id,
+      username: user.username
+    };
+
+    currentProfile = {
+      id: user.id,
+      username: user.username,
+      display_name: user.display_name,
+      role: user.role
+    };
+
+    // Save session
+    saveToStorage(STORAGE_KEYS.CURRENT_USER, {
+      id: user.id,
+      username: user.username,
+      profile: currentProfile
     });
 
-    if (error) throw error;
+    updateUIForAuthState(true);
+    showToast('Đăng nhập thành công!', 'success');
 
-    return { data, error: null };
+    return { data: currentUser, error: null };
   } catch (error) {
     console.error('Login error:', error);
-    return { data: null, error };
+    showToast('Lỗi khi đăng nhập', 'error');
+    return { error };
   }
 }
 
@@ -156,36 +198,14 @@ async function loginUser(username, password) {
 // ============================================
 
 async function logoutUser() {
-  if (!supabase) return;
-
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error('Logout error:', error);
-    showToast('Lỗi khi đăng xuất', 'error');
-  }
-}
-
-// ============================================
-// LOAD USER PROFILE
-// ============================================
-
-async function loadUserProfile() {
-  if (!supabase || !currentUser) return null;
-
   try {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', currentUser.id)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    currentProfile = data;
-    return data;
+    currentUser = null;
+    currentProfile = null;
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    updateUIForAuthState(false);
+    showToast('Đã đăng xuất', 'success');
   } catch (error) {
-    console.error('Error loading profile:', error);
-    return null;
+    console.error('Logout error:', error);
   }
 }
 
@@ -194,48 +214,60 @@ async function loadUserProfile() {
 // ============================================
 
 async function saveArticle(articleType, articleId, articleTitle) {
-  if (!supabase || !currentUser) {
+  if (!currentUser) {
     showToast('Vui lòng đăng nhập để lưu bài viết', 'error');
     return { error: 'Not authenticated' };
   }
 
   try {
-    const { data, error } = await supabase
-      .from('saved_articles')
-      .insert({
-        user_id: currentUser.id,
-        article_type: articleType,
-        article_id: articleId,
-        article_title: articleTitle
-      });
+    const savedArticles = getFromStorage(STORAGE_KEYS.SAVED_ARTICLES) || [];
 
-    if (error) throw error;
+    // Check if already saved
+    const exists = savedArticles.find(
+      a => a.user_id === currentUser.id &&
+           a.article_type === articleType &&
+           a.article_id === articleId
+    );
 
-    showToast('Đã lưu bài viết! 💾', 'success');
-    return { data, error: null };
-  } catch (error) {
-    if (error.code === '23505') {
+    if (exists) {
       showToast('Bài viết đã được lưu trước đó', 'error');
-    } else {
-      showToast('Lỗi khi lưu bài viết', 'error');
+      return { error: 'Already saved' };
     }
-    return { data: null, error };
+
+    const newArticle = {
+      id: generateId(),
+      user_id: currentUser.id,
+      article_type: articleType,
+      article_id: articleId,
+      article_title: articleTitle,
+      saved_at: new Date().toISOString()
+    };
+
+    savedArticles.push(newArticle);
+    saveToStorage(STORAGE_KEYS.SAVED_ARTICLES, savedArticles);
+
+    showToast('Đã lưu bài viết!', 'success');
+    return { data: newArticle, error: null };
+  } catch (error) {
+    console.error('Error saving article:', error);
+    showToast('Lỗi khi lưu bài viết', 'error');
+    return { error };
   }
 }
 
 async function unsaveArticle(articleType, articleId) {
-  if (!supabase || !currentUser) return;
+  if (!currentUser) return;
 
   try {
-    const { error } = await supabase
-      .from('saved_articles')
-      .delete()
-      .eq('user_id', currentUser.id)
-      .eq('article_type', articleType)
-      .eq('article_id', articleId);
+    let savedArticles = getFromStorage(STORAGE_KEYS.SAVED_ARTICLES) || [];
 
-    if (error) throw error;
+    savedArticles = savedArticles.filter(
+      a => !(a.user_id === currentUser.id &&
+             a.article_type === articleType &&
+             a.article_id === articleId)
+    );
 
+    saveToStorage(STORAGE_KEYS.SAVED_ARTICLES, savedArticles);
     showToast('Đã bỏ lưu bài viết', 'success');
   } catch (error) {
     console.error('Error unsaving article:', error);
@@ -244,17 +276,13 @@ async function unsaveArticle(articleType, articleId) {
 }
 
 async function getSavedArticles() {
-  if (!supabase || !currentUser) return [];
+  if (!currentUser) return [];
 
   try {
-    const { data, error } = await supabase
-      .from('saved_articles')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('saved_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
+    const savedArticles = getFromStorage(STORAGE_KEYS.SAVED_ARTICLES) || [];
+    return savedArticles
+      .filter(a => a.user_id === currentUser.id)
+      .sort((a, b) => new Date(b.saved_at) - new Date(a.saved_at));
   } catch (error) {
     console.error('Error getting saved articles:', error);
     return [];
@@ -262,19 +290,15 @@ async function getSavedArticles() {
 }
 
 async function isArticleSaved(articleType, articleId) {
-  if (!supabase || !currentUser) return false;
+  if (!currentUser) return false;
 
   try {
-    const { data, error } = await supabase
-      .from('saved_articles')
-      .select('id')
-      .eq('user_id', currentUser.id)
-      .eq('article_type', articleType)
-      .eq('article_id', articleId)
-      .maybeSingle();
-
-    if (error) throw error;
-    return !!data;
+    const savedArticles = getFromStorage(STORAGE_KEYS.SAVED_ARTICLES) || [];
+    return savedArticles.some(
+      a => a.user_id === currentUser.id &&
+           a.article_type === articleType &&
+           a.article_id === articleId
+    );
   } catch (error) {
     return false;
   }
@@ -285,42 +309,90 @@ async function isArticleSaved(articleType, articleId) {
 // ============================================
 
 async function saveDetectionHistory(meatType, freshnessLevel, imageUrl = '', resultData = {}) {
-  if (!supabase) return { error: 'No Supabase' };
-
   try {
-    const { data, error } = await supabase
-      .from('detection_history')
-      .insert({
-        user_id: currentUser?.id || null, // Null for anonymous users
-        meat_type: meatType,
-        freshness_level: freshnessLevel,
-        image_url: imageUrl,
-        result_data: resultData
-      });
+    const history = getFromStorage(STORAGE_KEYS.DETECTION_HISTORY) || [];
 
-    if (error) throw error;
-    return { data, error: null };
+    const newDetection = {
+      id: generateId(),
+      user_id: currentUser?.id || null,
+      meat_type: meatType,
+      freshness_level: freshnessLevel,
+      image_url: imageUrl,
+      result_data: resultData,
+      detected_at: new Date().toISOString()
+    };
+
+    history.push(newDetection);
+    saveToStorage(STORAGE_KEYS.DETECTION_HISTORY, history);
+
+    return { data: newDetection, error: null };
   } catch (error) {
     console.error('Error saving detection:', error);
-    return { data: null, error };
+    return { error };
   }
 }
 
 async function getDetectionHistory(limit = 20) {
-  if (!supabase || !currentUser) return [];
+  if (!currentUser) return [];
 
   try {
-    const { data, error } = await supabase
-      .from('detection_history')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('detected_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data || [];
+    const history = getFromStorage(STORAGE_KEYS.DETECTION_HISTORY) || [];
+    return history
+      .filter(h => h.user_id === currentUser.id)
+      .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))
+      .slice(0, limit);
   } catch (error) {
     console.error('Error getting detection history:', error);
+    return [];
+  }
+}
+
+// ============================================
+// STORAGE REMINDERS
+// ============================================
+
+async function saveStorageReminder(meatType, freshnessLevel, estimatedDays, notes = '') {
+  if (!currentUser) {
+    showToast('Vui lòng đăng nhập', 'error');
+    return { error: 'Not authenticated' };
+  }
+
+  try {
+    const reminders = getFromStorage(STORAGE_KEYS.STORAGE_REMINDERS) || [];
+
+    const newReminder = {
+      id: generateId(),
+      user_id: currentUser.id,
+      meat_type: meatType,
+      freshness_level: freshnessLevel,
+      storage_date: new Date().toISOString(),
+      estimated_days: estimatedDays,
+      notes: notes,
+      reminder_sent: false,
+      created_at: new Date().toISOString()
+    };
+
+    reminders.push(newReminder);
+    saveToStorage(STORAGE_KEYS.STORAGE_REMINDERS, reminders);
+
+    showToast('Đã lưu nhắc nhở!', 'success');
+    return { data: newReminder, error: null };
+  } catch (error) {
+    console.error('Error saving reminder:', error);
+    return { error };
+  }
+}
+
+async function getStorageReminders() {
+  if (!currentUser) return [];
+
+  try {
+    const reminders = getFromStorage(STORAGE_KEYS.STORAGE_REMINDERS) || [];
+    return reminders
+      .filter(r => r.user_id === currentUser.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } catch (error) {
+    console.error('Error getting reminders:', error);
     return [];
   }
 }
@@ -334,28 +406,22 @@ function updateUIForAuthState(isAuthenticated) {
   const navBtns = document.querySelectorAll('.nav__btn');
 
   if (isAuthenticated && currentProfile) {
-    // Update user icon
     if (userIcon) {
       userIcon.textContent = currentProfile.role === 'admin' ? '⚙️' : '👤';
       userIcon.title = currentProfile.display_name || currentProfile.username;
     }
-
-    // Show user profile in nav
     updateNavigationForAuth(true);
   } else {
-    // Not authenticated
     if (userIcon) {
       userIcon.textContent = '👤';
       userIcon.title = 'Đăng nhập';
     }
-
     updateNavigationForAuth(false);
   }
 }
 
 function updateNavigationForAuth(isAuth) {
   // This will be called to update nav items based on auth state
-  // Implementation depends on your nav structure
 }
 
 // ============================================
@@ -393,11 +459,12 @@ window.authSystem = {
   isArticleSaved,
   saveDetectionHistory,
   getDetectionHistory,
+  saveStorageReminder,
+  getStorageReminders,
   isAuthenticated,
   isAdmin,
   getCurrentUser,
   getCurrentProfile,
-  // Safe encoding utilities
   safeBtoa,
   safeAtob
 };
