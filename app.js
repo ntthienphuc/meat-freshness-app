@@ -326,6 +326,8 @@ let videoStream = null;
 let tipIndex = 0;
 let didYouKnowIndex = 0;
 let sliderValue = 100; // 0-100, maps to levels 1-5
+let searchFilter = 'all'; // all, blog, dictionary
+let searchTimeout = null;
 
 // Navigation functions - Fixed and properly exposed to global scope
 window.showPage = function(pageId) {
@@ -409,17 +411,16 @@ document.addEventListener('DOMContentLoaded', function() {
   showPage('home');
   initializeCamera();
   initializeAdminControls();
-  startRotatingTips();
-  
+
   // Initialize blog search
   const blogSearch = document.getElementById('blog-search');
   if (blogSearch) {
     blogSearch.addEventListener('input', handleBlogSearch);
   }
-  
+
   // Show daily "Did you know" after 5 seconds
   setTimeout(showDidYouKnow, 5000);
-  
+
   console.log('App initialized successfully'); // Debug log
 });
 
@@ -500,31 +501,152 @@ window.showDailyAnswer = function() {
   }
 };
 
-function startRotatingTips() {
-  const tipElement = document.querySelector('.tip-text');
-  if (!tipElement) return;
-  
-  const tips = [
-    "Kiểm tra độ đàn hồi của thịt bằng cách ấn nhẹ",
-    "Nhiệt độ tủ lạnh lý tưởng là 0-4°C",
-    "Thịt tươi có mùi tự nhiên, không tanh hay hôi", 
-    "Chọn thịt có tem kiểm định và nguồn gốc rõ ràng",
-    "Mua thịt vào sáng sớm để đảm bảo độ tươi",
-    "Chia thịt thành khẩu phần nhỏ trước khi đông lạnh"
-  ];
-  
-  function rotateTip() {
-    tipElement.style.opacity = '0';
-    setTimeout(() => {
-      tipElement.textContent = tips[tipIndex % tips.length];
-      tipElement.style.opacity = '1';
-      tipIndex++;
-    }, 300);
+// Global Search Functionality
+window.handleGlobalSearch = function(query) {
+  clearTimeout(searchTimeout);
+
+  const resultsContainer = document.getElementById('global-search-results');
+
+  if (!query || query.trim().length < 2) {
+    resultsContainer.classList.remove('active');
+    return;
   }
-  
-  rotateTip();
-  setInterval(rotateTip, 4000);
+
+  searchTimeout = setTimeout(() => {
+    performSearch(query.trim().toLowerCase());
+  }, 300);
+};
+
+function performSearch(query) {
+  const resultsContainer = document.getElementById('global-search-results');
+  let results = [];
+
+  // Search blogs
+  if (searchFilter === 'all' || searchFilter === 'blog') {
+    const blogResults = appData.blogPosts.filter(post =>
+      post.title.toLowerCase().includes(query) ||
+      post.excerpt.toLowerCase().includes(query) ||
+      post.content.toLowerCase().includes(query) ||
+      post.tags.some(tag => tag.toLowerCase().includes(query))
+    ).map(post => ({
+      type: 'blog',
+      id: post.id,
+      title: post.title,
+      excerpt: post.excerpt,
+      action: () => showBlogPost(post.id)
+    }));
+    results = results.concat(blogResults);
+  }
+
+  // Search dictionary
+  if (searchFilter === 'all' || searchFilter === 'dictionary') {
+    Object.entries(appData.meatTypes).forEach(([meatType, meat]) => {
+      // Search meat type name
+      if (meat.name.toLowerCase().includes(query)) {
+        results.push({
+          type: 'dictionary',
+          id: meatType,
+          title: meat.name,
+          excerpt: meat.description,
+          action: () => showMeatDictionary(meatType)
+        });
+      }
+
+      // Search freshness levels
+      Object.entries(meat.levels).forEach(([level, data]) => {
+        if (data.name.toLowerCase().includes(query) ||
+            data.properties.toLowerCase().includes(query) ||
+            data.signs.toLowerCase().includes(query)) {
+          results.push({
+            type: 'dictionary',
+            id: `${meatType}-${level}`,
+            title: `${meat.name} - Level ${level}: ${data.name}`,
+            excerpt: data.properties,
+            action: () => {
+              showMeatDictionary(meatType);
+              setTimeout(() => {
+                const slider = document.getElementById('freshness-slider');
+                if (slider) {
+                  // Map level to slider value
+                  const value = level * 20;
+                  slider.value = value;
+                  updateFreshnessLevel(value);
+                }
+              }, 500);
+            }
+          });
+        }
+      });
+    });
+  }
+
+  displaySearchResults(results, query);
 }
+
+function displaySearchResults(results, query) {
+  const resultsContainer = document.getElementById('global-search-results');
+
+  if (results.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+        Không tìm thấy kết quả cho "<strong>${query}</strong>"
+      </div>
+    `;
+    resultsContainer.classList.add('active');
+    return;
+  }
+
+  resultsContainer.innerHTML = results.slice(0, 8).map(result => `
+    <div class="search-result-item" onclick='${result.action.toString().replace(/'/g, "\\'")}; closeSearchResults();'>
+      <div class="search-result-type">${result.type === 'blog' ? '📝 Blog' : '📖 Từ điển'}</div>
+      <div class="search-result-title">${highlightText(result.title, query)}</div>
+      <div class="search-result-excerpt">${highlightText(result.excerpt.substring(0, 100), query)}...</div>
+    </div>
+  `).join('');
+
+  resultsContainer.classList.add('active');
+}
+
+function highlightText(text, query) {
+  const regex = new RegExp(`(${query})`, 'gi');
+  return text.replace(regex, '<strong style="color: var(--color-primary); background: var(--color-gray-100); padding: 0 2px; border-radius: 2px;">$1</strong>');
+}
+
+window.setSearchFilter = function(filter) {
+  searchFilter = filter;
+
+  // Update button states
+  document.querySelectorAll('.search-filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+
+  // Re-run search if there's a query
+  const searchInput = document.getElementById('global-search-input');
+  if (searchInput && searchInput.value.trim()) {
+    handleGlobalSearch(searchInput.value);
+  }
+};
+
+function closeSearchResults() {
+  const resultsContainer = document.getElementById('global-search-results');
+  const searchInput = document.getElementById('global-search-input');
+
+  if (resultsContainer) {
+    resultsContainer.classList.remove('active');
+  }
+  if (searchInput) {
+    searchInput.value = '';
+  }
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', function(e) {
+  const searchContainer = document.querySelector('.global-search');
+  if (searchContainer && !searchContainer.contains(e.target)) {
+    closeSearchResults();
+  }
+});
 
 function showDidYouKnow() {
   const modal = document.getElementById('did-you-know-modal');

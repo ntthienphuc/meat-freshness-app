@@ -36,10 +36,31 @@
                     <div class="hero-content">
                         <h2 class="hero__title">Kiểm tra độ tươi của thịt một cách thông minh</h2>
                         <p class="hero__subtitle">Ứng dụng AI giúp bạn nhận biết chất lượng thịt và bảo quản an toàn</p>
-                        <div class="hero__tip" id="rotating-tip">
-                            <span class="tip-icon">💡</span>
-                            <span class="tip-text">Đang tải mẹo...</span>
+
+                        <!-- Global Search -->
+                        <div class="global-search">
+                            <div class="search-container">
+                                <div class="search-input-wrapper">
+                                    <span class="search-icon">🔍</span>
+                                    <input
+                                        type="text"
+                                        class="global-search-input"
+                                        id="global-search-input"
+                                        placeholder="Tìm kiếm blog, từ điển độ tươi thịt..."
+                                        oninput="handleGlobalSearch(this.value)"
+                                    >
+                                </div>
+                                <div class="search-filters">
+                                    <button class="search-filter-btn active" onclick="setSearchFilter('all')">Tất cả</button>
+                                    <button class="search-filter-btn" onclick="setSearchFilter('blog')">📝 Blog</button>
+                                    <button class="search-filter-btn" onclick="setSearchFilter('dictionary')">📖 Từ điển</button>
+                                </div>
+                            </div>
+                            <div class="search-results" id="global-search-results">
+                                <!-- Search results will be populated here -->
+                            </div>
                         </div>
+
                         <button class="btn btn--primary btn--lg hero-cta" onclick="showPage('detection')">
                             📱 Kiểm tra ngay bằng AI
                         </button>
