@@ -21,7 +21,7 @@ curl https://thienphuc12339-meat.hf.space/health
 
 ### 2️⃣ **SUPABASE_URL (Database)**
 ```
-https://0ec90b57d6e95fcbda19832f.supabase.co
+SUPABASE_URL
 ```
 **Giải thích:**
 - Đây là database Supabase của project này
